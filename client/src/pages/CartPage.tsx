@@ -1,202 +1,204 @@
-import { useState, useEffect } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useCart } from '../hooks/useCart'
 import type { Product } from '../types'
 
 const DEMO_PRODUCTS: Product[] = [
-  { id: 1, name: 'Nitro Runner "Acid"', size: '43', color: 'Rojo Eléctrico', price: 129.00, image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Runner' },
-  { id: 2, name: 'Vibra Smart Gear VI', size: 'M', color: 'Básico Minimal', price: 85.50, image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Gear' },
-  { id: 3, name: 'Boxy Tee "Essentials"', size: 'L', color: 'Negro Obsidiana', price: 45.00, image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Tee' },
-]
-
-const COMPLETE_LOOK_PRODUCTS = [
-  { id: 4, name: 'Crew Socks X', price: 32.00, image: 'https://placehold.co/80x80/E2E4F0/71749E?text=Socks' },
-  { id: 5, name: 'VibraBasket', price: 25.00, image: 'https://placehold.co/80x80/E2E4F0/71749E?text=Basket' },
-  { id: 6, name: 'Tech Pack 01', price: 95.00, image: 'https://placehold.co/80x80/E2E4F0/71749E?text=Pack' },
-  { id: 7, name: 'Winter Cap', price: 18.00, image: 'https://placehold.co/80x80/E2E4F0/71749E?text=Cap' },
+  {
+    id: 1,
+    name: 'Nitro Runner Acid',
+    size: '43',
+    color: 'Rojo Electrico',
+    price: 129,
+    image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Runner',
+  },
+  {
+    id: 2,
+    name: 'Vibra Smart Gear VI',
+    size: 'M',
+    color: 'Blanco Lunar',
+    price: 85.5,
+    image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Gear',
+  },
+  {
+    id: 3,
+    name: 'Boxy Tee Essentials',
+    size: 'L',
+    color: 'Negro Obsidiana',
+    price: 45,
+    image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Tee',
+  },
+  {
+    id: 4,
+    name: 'Crew Socks X',
+    size: 'Unica',
+    color: 'Gris Humo',
+    price: 18,
+    image: 'https://placehold.co/100x100/E2E4F0/71749E?text=Socks',
+  },
 ]
 
 const CartPage = () => {
   const navigate = useNavigate()
-  const { items, addItem, removeItem, updateQuantity, total, itemCount: cartItemCount } = useCart()
-  const [coupon, setCoupon] = useState('')
-
-  useEffect(() => {
-    if (items.length === 0) {
-      DEMO_PRODUCTS.forEach(product => {
-        addItem(product, product.id === 3 ? 2 : 1)
-      })
-    }
-  }, [items.length, addItem])
+  const { items, addItem, removeItem, updateQuantity, total, itemCount } = useCart()
 
   const subtotal = total
-  const shipping = 12.00
-  const taxes = 21.15
-  const finalTotal = subtotal + shipping + taxes
+  const shipping = items.length > 0 ? 0 : 0
+  const totalFinal = subtotal + shipping
 
-  const handleQuantityChange = (productId: number, delta: number) => {
-    const item = items.find(i => i.product.id === productId)
-    if (item) {
-      const newQty = item.quantity + delta
-      if (newQty <= 0) {
-        removeItem(productId)
-      } else {
-        updateQuantity(productId, newQty)
-      }
+  const handleCheckout = () => {
+    if (items.length === 0) {
+      return
     }
-  }
 
-  const handleApplyCoupon = () => {
-    console.log('Applying coupon:', coupon)
+    navigate('/checkout')
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F0F1F9', fontFamily: 'Be Vietnam Pro, sans-serif' }}>
-      <header style={{ 
-        padding: '1rem 2rem', 
-        background: '#fff',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-      }}>
-        <span style={{ fontSize: '1.5rem', fontWeight: '800', fontFamily: 'Plus Jakarta Sans, sans-serif', color: '#2563EB' }}>
-          VIBRA SHOP
-        </span>
-        <nav style={{ display: 'flex', gap: '2rem', color: '#1A1A2E' }}>
-          <span style={{ cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem' }}>Hombre</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem' }}>Mujer</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem' }}>Accesorios</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500', fontSize: '0.9rem', color: '#FF2E63' }}>Ofertas</span>
-        </nav>
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '1.25rem' }}>👤</span>
-          <div style={{ position: 'relative', cursor: 'pointer' }}>
-            <span style={{ color: '#1A1A2E', fontSize: '1.25rem' }}>🛒</span>
-            <span style={{ position: 'absolute', top: '-8px', right: '-8px', background: '#FF2E63', color: '#fff', fontSize: '0.65rem', fontWeight: 'bold', width: '18px', height: '18px', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {cartItemCount}
-            </span>
+    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-white/70 bg-white/50 shadow-soft backdrop-blur">
+        <header className="flex items-center justify-between border-b border-line/80 px-6 py-4 md:px-8">
+          <span className="font-display text-lg font-extrabold uppercase tracking-[0.12em] text-brand-600">
+            Vibra Shop
+          </span>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-500">
+            Carrito activo: {itemCount} producto(s)
+          </span>
+        </header>
+
+        <main className="px-5 py-8 md:px-8 md:py-10">
+          <div className="mb-8 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+            <div>
+              <span className="text-xs font-semibold uppercase tracking-[0.12em] text-brand-500">Paso 1 de 3</span>
+              <h1 className="mt-2 font-display text-4xl font-bold tracking-[-0.04em] text-ink-900">
+                Tu carrito
+              </h1>
+              <p className="mt-2 max-w-2xl text-sm text-ink-700">
+                Revisa los productos seleccionados antes de pasar al checkout.
+              </p>
+            </div>
+
+            <button
+              className="inline-flex h-12 items-center justify-center rounded-2xl bg-brand-500 px-6 text-sm font-bold text-white shadow-[0_16px_30px_rgba(79,110,247,0.28)] transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none"
+              onClick={handleCheckout}
+              disabled={items.length === 0}
+            >
+              Ir al checkout
+            </button>
           </div>
-        </div>
-      </header>
 
-      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <p style={{ color: '#71749E', fontSize: '0.8rem', fontWeight: '500', textTransform: 'uppercase', margin: '0 0 0.5rem' }}>TU SELECCIÓN</p>
-        <h1 style={{ color: '#1A1A2E', fontFamily: 'Plus Jakarta Sans, sans-serif', fontSize: '2.5rem', margin: '0 0 2rem' }}>
-          Mi Carrito <span style={{ fontWeight: '800' }}>Vibrante.</span>
-        </h1>
-
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 380px', gap: '2rem' }}>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            {items.map(({ product, quantity }) => (
-              <div key={product.id} style={{ background: '#fff', borderRadius: '12px', border: '1px solid #E2E4F0', padding: '1.25rem', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-                <img src={product.image} alt={product.name} style={{ width: '100px', height: '100px', borderRadius: '8px', background: '#F0F1F9' }} />
-                <div style={{ flex: 1 }}>
-                  <p style={{ margin: 0, fontWeight: '700', fontSize: '1rem', color: '#1A1A2E' }}>"{product.name.split('"')[1]}"</p>
-                  <p style={{ margin: '0.25rem 0 0', color: '#71749E', fontSize: '0.85rem' }}>Talla {product.size} · {product.color}</p>
-                  <button onClick={() => removeItem(product.id)} style={{ background: 'none', border: 'none', color: '#FF2E63', fontSize: '0.8rem', cursor: 'pointer', padding: 0, marginTop: '0.5rem' }}>Eliminar</button>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+            <section className="space-y-6">
+             {items.length === 0 ? (
+                <div className="rounded-[28px] bg-white px-6 py-10 text-center shadow-soft">
+                  <h2 className="font-display text-3xl font-bold text-ink-900">Tu carrito esta vacio</h2>
+                  <p className="mt-3 text-sm text-ink-700">
+                    Agrega productos para habilitar el checkout y la confirmacion de compra.
+                  </p>
                 </div>
-                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '0.75rem' }}>
-                  <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1A1A2E' }}>${product.price.toFixed(2)}</span>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <button onClick={() => handleQuantityChange(product.id, -1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid #E2E4F0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: '#71749E' }}>−</button>
-                    <span style={{ minWidth: '20px', textAlign: 'center', fontSize: '0.9rem' }}>{quantity}</span>
-                    <button onClick={() => handleQuantityChange(product.id, 1)} style={{ width: '28px', height: '28px', borderRadius: '50%', border: '1px solid #E2E4F0', background: '#fff', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1rem', color: '#71749E' }}>+</button>
+              ) : (
+                <div className="space-y-4">
+                  {items.map(({ product, quantity }) => (
+                    <article
+                      key={product.id}
+                      className="grid gap-4 rounded-[28px] bg-white p-5 shadow-soft md:grid-cols-[72px_minmax(0,1fr)_auto_auto] md:items-center"
+                    >
+                      <img className="h-[72px] w-[72px] rounded-2xl border border-line object-cover" src={product.image} alt={product.name} />
+                      <div className="min-w-0">
+                        <strong className="block truncate text-base font-bold text-ink-900">{product.name}</strong>
+                        <span className="mt-1 block text-sm text-ink-500">
+                          Talla {product.size} · {product.color}
+                        </span>
+                        <button
+                          type="button"
+                          className="mt-3 text-sm font-semibold text-danger"
+                          onClick={() => removeItem(product.id)}
+                        >
+                          Eliminar
+                        </button>
+                      </div>
+                      <div className="inline-flex items-center gap-2 rounded-2xl border border-line bg-shell px-2 py-2">
+                        <button
+                          type="button"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-sm font-bold text-ink-900"
+                          onClick={() => updateQuantity(product.id, quantity - 1)}
+                        >
+                          -
+                        </button>
+                        <span className="min-w-6 text-center text-sm font-semibold text-ink-900">{quantity}</span>
+                        <button
+                          type="button"
+                          className="flex h-8 w-8 items-center justify-center rounded-xl bg-white text-sm font-bold text-ink-900"
+                          onClick={() => updateQuantity(product.id, quantity + 1)}
+                        >
+                          +
+                        </button>
+                      </div>
+                      <strong className="text-right text-base font-bold text-ink-900 md:min-w-24">
+                        ${(product.price * quantity).toFixed(2)}
+                      </strong>
+                    </article>
+                  ))}
+                </div>
+              )}
+
+              <section className="rounded-[28px] bg-white p-6 shadow-soft">
+                <h2 className="font-display text-2xl font-bold text-ink-900">Agrega algo mas</h2>
+                <div className="mt-5 grid gap-4 md:grid-cols-2">
+                {DEMO_PRODUCTS.map((product) => (
+                    <article key={product.id} className="grid grid-cols-[56px_minmax(0,1fr)_auto] items-center gap-3 rounded-2xl border border-line bg-shell px-3 py-3">
+                      <img className="h-14 w-14 rounded-2xl border border-line object-cover" src={product.image} alt={product.name} />
+                      <div className="min-w-0">
+                        <strong className="block truncate text-sm font-bold text-ink-900">{product.name}</strong>
+                        <span className="text-sm text-ink-500">${product.price.toFixed(2)}</span>
+                      </div>
+                      <button
+                        type="button"
+                        className="rounded-2xl bg-brand-500 px-4 py-2 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-brand-600"
+                        onClick={() => addItem(product)}
+                      >
+                        Agregar
+                      </button>
+                    </article>
+                  ))}
+                </div>
+              </section>
+            </section>
+
+            <aside className="space-y-5">
+              <div className="rounded-[28px] bg-white px-5 py-6 shadow-soft">
+                <h2 className="font-display text-2xl font-bold text-ink-900">Resumen</h2>
+                <div className="mt-5 space-y-3 text-sm text-ink-700">
+                  <div className="flex items-center justify-between">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Envio</span>
+                    <span>{items.length > 0 ? 'Gratis' : '$0.00'}</span>
+                  </div>
+                  <div className="flex items-center justify-between border-t border-line pt-3 font-display text-2xl font-extrabold text-brand-600">
+                    <span>Total</span>
+                    <span>${totalFinal.toFixed(2)}</span>
                   </div>
                 </div>
               </div>
-            ))}
 
-            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #E2E4F0', padding: '1.5rem' }}>
-              <p style={{ color: '#71749E', fontSize: '0.75rem', fontWeight: '600', textTransform: 'uppercase', margin: '0 0 1rem', letterSpacing: '0.05em' }}>COMPLETA EL LOOK</p>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem' }}>
-                {COMPLETE_LOOK_PRODUCTS.map(product => (
-                  <div key={product.id}>
-                    <img src={product.image} alt={product.name} style={{ width: '100%', aspectRatio: '1', borderRadius: '8px', objectFit: 'cover', background: '#F0F1F9' }} />
-                    <p style={{ margin: '0.5rem 0 0.25rem', fontSize: '0.8rem', color: '#1A1A2E', fontWeight: '500' }}>{product.name}</p>
-                    <p style={{ margin: 0, fontSize: '0.85rem', color: '#2563EB', fontWeight: '600' }}>${product.price.toFixed(2)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </div>
-
-          <div style={{ position: 'sticky', top: '100px', height: 'fit-content' }}>
-            <div style={{ background: '#fff', borderRadius: '12px', border: '1px solid #E2E4F0', padding: '1.5rem' }}>
-              <h2 style={{ margin: '0 0 1.5rem', fontWeight: '700', fontSize: '1.1rem', color: '#1A1A2E' }}>Resumen de Pedido</h2>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', color: '#71749E', fontSize: '0.9rem' }}>
-                <span>Subtotal ({cartItemCount} productos)</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.75rem', color: '#71749E', fontSize: '0.9rem' }}>
-                <span>Envío Estándar</span>
-                <span>${shipping.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem', color: '#71749E', fontSize: '0.9rem' }}>
-                <span>Impuestos</span>
-                <span>${taxes.toFixed(2)}</span>
-              </div>
-              <div style={{ borderTop: '1px solid #E2E4F0', marginBottom: '1rem' }} />
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                <span style={{ fontWeight: '700', fontSize: '1.1rem', color: '#1A1A2E' }}>TOTAL</span>
-                <span style={{ fontWeight: '800', fontSize: '1.25rem', color: '#2563EB' }}>${finalTotal.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.5rem' }}>
-                <input type="text" value={coupon} onChange={(e) => setCoupon(e.target.value)} placeholder="Código de descuento" style={{ flex: 1, height: '40px', padding: '0 1rem', border: '1px solid #E2E4F0', borderRadius: '8px', fontSize: '0.85rem', outline: 'none', backgroundColor: '#EEF0FB' }} />
-                <button onClick={handleApplyCoupon} style={{ padding: '0 1rem', backgroundColor: '#2563EB', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: '600', fontSize: '0.85rem', cursor: 'pointer' }}>APLICAR</button>
-              </div>
-              <button onClick={() => navigate('/checkout')} style={{ width: '100%', height: '48px', backgroundColor: '#2563EB', color: '#fff', border: 'none', borderRadius: '10px', fontSize: '1rem', fontWeight: '800', cursor: 'pointer', fontFamily: 'Plus Jakarta Sans, sans-serif', boxShadow: '0 4px 12px rgba(37, 99, 235, 0.3)', marginBottom: '1rem' }}>IR A PAGAR →</button>
-              <p style={{ textAlign: 'center', color: '#71749E', fontSize: '0.75rem', marginBottom: '0.75rem' }}>MÉTODOS DE PAGO SEGUROS</p>
-              <div style={{ display: 'flex', justifyContent: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-                {['Visa', 'Mastercard', 'PayPal', 'American Express'].map(card => (<span key={card} style={{ color: '#71749E', fontSize: '0.7rem', fontWeight: '500' }}>{card}</span>))}
-              </div>
-              <div style={{ background: '#FFF0F4', borderRadius: '10px', border: '1px solid #FF2E63', padding: '1rem', display: 'flex', gap: '0.75rem' }}>
-                <span style={{ color: '#FF2E63', fontSize: '1.5rem' }}>●</span>
-                <div>
-                  <p style={{ margin: 0, color: '#FF2E63', fontWeight: '700', fontSize: '0.9rem' }}>Puntos Vibra</p>
-                  <p style={{ margin: '0.25rem 0 0', color: '#71749E', fontSize: '0.75rem' }}>Continúa comprando y acumularás {Math.floor(subtotal / 10)} puntos para tu próximo descuento exclusivo.</p>
+              <div className="rounded-[28px] bg-white px-5 py-6 shadow-soft">
+                <h3 className="font-display text-xl font-bold text-ink-900">Estado del flujo</h3>
+                <div className="mt-4 space-y-2 text-sm text-ink-700">
+                  <p>1. Carrito</p>
+                  <p>2. Datos de envio y pago</p>
+                  <p>3. Confirmacion final</p>
                 </div>
               </div>
-            </div>
+            </aside>
           </div>
-        </div>
-      </main>
+        </main>
 
-      <footer style={{ background: '#fff', padding: '3rem 2rem', marginTop: '4rem', borderTop: '1px solid #E2E4F0' }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem' }}>
-          <div>
-            <h3 style={{ color: '#1A1A2E', fontWeight: '800', margin: '0 0 0.5rem', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>VIBRA SHOP</h3>
-            <p style={{ color: '#71749E', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>© 2024 VIBRA SHOP. ELECTRIC EDITORIAL.</p>
-            <div style={{ display: 'flex', gap: '1rem' }}>
-              <span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '1.1rem' }}>📺</span>
-              <span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '1.1rem' }}>✉</span>
-            </div>
-          </div>
-          <div>
-            <h4 style={{ color: '#71749E', fontWeight: '600', margin: '0 0 1rem', fontSize: '0.75rem', textTransform: 'uppercase' }}>PRODUCTO</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>HOMBRE</span></li>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>MUJER</span></li>
-              <li><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>ACCESORIOS</span></li>
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ color: '#71749E', fontWeight: '600', margin: '0 0 1rem', fontSize: '0.75rem', textTransform: 'uppercase' }}>AYUDA</h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>PRIVACIDAD</span></li>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>SOPORTE</span></li>
-              <li><span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '0.85rem' }}>ENVÍOS</span></li>
-            </ul>
-          </div>
-          <div>
-            <h4 style={{ color: '#71749E', fontWeight: '600', margin: '0 0 1rem', fontSize: '0.75rem', textTransform: 'uppercase' }}>SUSCRÍBETE PARA OFERTAS</h4>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '1.1rem' }}>📺</span>
-              <span style={{ color: '#1A1A2E', cursor: 'pointer', fontSize: '1.1rem' }}>✉</span>
-            </div>
-          </div>
-        </div>
-      </footer>
+        <footer className="border-t border-line/80 px-6 py-6 text-center text-sm text-ink-500 md:px-8">
+          © 2026 Vibra Shop · Sprint 4 Checkout y confirmacion
+        </footer>
+      </div>
     </div>
   )
 }

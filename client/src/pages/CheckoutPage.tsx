@@ -1,375 +1,261 @@
-import { useState, useMemo } from 'react'
-import { useCart } from '../hooks/useCart'
+import { useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { useCheckoutState, clearCheckoutData } from '../context/CheckoutContext'
 import { OrderForm, type FormData } from '../components/checkout/OrderForm'
+import { useCart } from '../hooks/useCart'
+import { useCheckoutState } from '../context/CheckoutContext'
+import type { CompletedOrder } from '../types'
 
 const CheckoutPage = () => {
-  const { items, clearCart } = useCart()
   const navigate = useNavigate()
-  const { 
-    formData: savedFormData, 
-    isFormValid: savedIsFormValid,
-    coupon, setCoupon,
-    couponApplied, setCouponApplied
+  const { items, clearCart } = useCart()
+  const {
+    formData,
+    isFormValid,
+    coupon,
+    setCoupon,
+    couponApplied,
+    setCouponApplied,
+    setLastOrder,
+    resetCheckout,
   } = useCheckoutState()
-  
-  const [loading, setLoading] = useState(false)
-  const [submitted, setSubmitted] = useState(false)
 
-  const handleFormChange = (_data: FormData, _isValid: boolean) => {
-  }
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [couponMessage, setCouponMessage] = useState('')
+  const paymentMethod = formData?.paymentMethod ?? 'tarjeta'
 
-  const handleBackToCart = () => {
-    navigate('/cart')
-  }
-
-  const subtotal = useMemo(() => {
-    return items.reduce((sum, item) => sum + item.product.price * item.quantity, 0)
-  }, [items])
-
-  const shipping = 0
+  const subtotal = useMemo(
+    () => items.reduce((sum, item) => sum + item.product.price * item.quantity, 0),
+    [items],
+  )
+  const shipping = items.length > 0 ? 0 : 0
   const discount = couponApplied ? subtotal * 0.1 : 0
   const total = subtotal + shipping - discount
 
+  const handleFormChange = (_data: FormData, _isValid: boolean) => {
+    setCouponMessage('')
+  }
+
   const handleApplyCoupon = () => {
-    if (coupon.toUpperCase() === 'VIBRA10') {
-      setCouponApplied(true)
+    if (coupon.trim().toUpperCase() !== 'VIBRA10') {
+      setCouponApplied(false)
+      setCouponMessage('Codigo invalido. Usa VIBRA10 para el descuento simulado.')
+      return
     }
+
+    setCouponApplied(true)
+    setCouponMessage('Descuento aplicado correctamente.')
   }
 
   const handleSubmit = async () => {
-    if (!savedFormData || !savedIsFormValid || submitted || items.length === 0) return
-    setLoading(true)
-    setSubmitted(true)
-    try {
-      await new Promise(resolve => setTimeout(resolve, 1500))
-      clearCart()
-      clearCheckoutData()
-      navigate('/confirmation')
-    } catch (error) {
-      console.error(error)
-      setSubmitted(false)
-      alert('Hubo un error al procesar la orden. Intenta de nuevo.')
-    } finally {
-      setLoading(false)
+    if (!formData || !isFormValid || items.length === 0 || isSubmitting) {
+      return
     }
+
+    const completedFormData = formData as CompletedOrder['formData']
+
+    setIsSubmitting(true)
+
+    await new Promise((resolve) => setTimeout(resolve, 1200))
+
+    setLastOrder({
+      id: `VIBRA-${Date.now().toString().slice(-8)}`,
+      createdAt: new Date().toISOString(),
+      items,
+      subtotal,
+      shipping,
+      discount,
+      total,
+      formData: completedFormData,
+    })
+
+    clearCart()
+    resetCheckout()
+    navigate('/confirmation')
+  }
+
+  if (items.length === 0) {
+    return (
+      <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+        <div className="mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-white/70 bg-white/50 shadow-soft backdrop-blur">
+          <header className="flex items-center justify-between border-b border-line/80 px-6 py-4">
+            <span className="font-display text-lg font-extrabold uppercase tracking-[0.12em] text-brand-600">
+              Vibra Shop
+            </span>
+            <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-500">
+              No hay productos para pagar
+            </span>
+          </header>
+
+          <main className="px-6 py-12 md:px-10">
+            <div className="mx-auto max-w-xl rounded-[28px] bg-white px-6 py-10 text-center shadow-soft">
+              <h1 className="font-display text-3xl font-bold text-ink-900">No puedes confirmar una compra vacia</h1>
+              <p className="mt-3 text-sm text-ink-700">
+                Vuelve al carrito, agrega productos y completa el formulario para continuar.
+              </p>
+              <button
+                className="mt-6 inline-flex h-12 items-center justify-center rounded-2xl border border-line px-6 text-sm font-semibold text-ink-900 transition hover:bg-brand-50"
+                onClick={() => navigate('/cart')}
+              >
+                Volver al carrito
+              </button>
+            </div>
+          </main>
+        </div>
+      </div>
+    )
   }
 
   return (
-    <div style={{ minHeight: '100vh', background: '#F0F1F9' }}>
-      <header style={{ 
-        padding: '1rem 2rem', 
-        background: '#F0F1F9',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        borderBottom: '1px solid #E2E4F0',
-      }}>
-        <span 
-          style={{ 
-            fontSize: '1.5rem', 
-            fontWeight: '800',
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            color: '#2563EB',
-          }}>
-          VIBRA SHOP
-        </span>
-        <nav style={{ display: 'flex', gap: '2rem', color: '#71749E' }}>
-          <span style={{ cursor: 'pointer', fontWeight: '500' }}>Hombre</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500' }}>Mujer</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500' }}>Accesorios</span>
-          <span style={{ cursor: 'pointer', fontWeight: '500', color: '#FF2E63' }}>Ofertas</span>
-        </nav>
-        <div style={{ display: 'flex', gap: '1.5rem', alignItems: 'center' }}>
-          <button 
-            onClick={handleBackToCart}
-            style={{ 
-              background: 'none', 
-              border: '1px solid #E2E4F0', 
-              borderRadius: '8px',
-              padding: '0.5rem 1rem',
-              cursor: 'pointer',
-              color: '#71749E',
-              fontSize: '0.85rem',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-            }}
-          >
-            ← Volver
-          </button>
-          <span style={{ color: '#71749E', cursor: 'pointer', fontSize: '1.25rem' }}>👤</span>
-          <span style={{ color: '#71749E', cursor: 'pointer', fontSize: '1.25rem' }}>🛒</span>
-        </div>
-      </header>
-
-      <main style={{ padding: '2rem', maxWidth: '1200px', margin: '0 auto' }}>
-        <div style={{ marginBottom: '1rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-          <h1 style={{ 
-            color: '#08060D', 
-            fontFamily: 'Plus Jakarta Sans, sans-serif',
-            fontSize: '2rem',
-            margin: 0,
-            fontWeight: '700',
-          }}>
-            Finalizar Compra
-          </h1>
-          <span style={{ color: '#2563EB', fontFamily: 'Plus Jakarta Sans, sans-serif', fontWeight: '600' }}>
-            🔒 PAGO SEGURO
+    <div className="min-h-screen px-4 py-8 sm:px-6 lg:px-10">
+      <div className="mx-auto max-w-6xl overflow-hidden rounded-[32px] border border-white/70 bg-white/50 shadow-soft backdrop-blur">
+        <header className="flex items-center justify-between border-b border-line/80 px-6 py-4 md:px-8">
+          <span className="font-display text-lg font-extrabold uppercase tracking-[0.12em] text-brand-600">
+            Vibra Shop
           </span>
-        </div>
+          <span className="text-xs font-semibold uppercase tracking-[0.12em] text-ink-500">
+            Pago seguro
+          </span>
+        </header>
 
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2rem' }}>
-          <OrderForm onFormChange={handleFormChange} />
+        <main className="px-5 py-8 md:px-8 md:py-10">
+          <div className="mb-5">
+            <button
+              className="inline-flex h-11 items-center justify-center rounded-2xl border border-line bg-white px-5 text-sm font-semibold text-ink-900 transition hover:bg-brand-50"
+              onClick={() => navigate('/cart')}
+            >
+              Volver al carrito
+            </button>
+          </div>
 
-          <div style={{ position: 'sticky', top: '2rem', height: 'fit-content' }}>
-            <div style={{ 
-              background: '#fff', 
-              padding: '1.5rem', 
-              borderRadius: '14px', 
-              boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)', 
-              border: '1px solid #E2E4F0',
-              marginBottom: '1rem' 
-            }}>
-              <h2 style={{ 
-                marginTop: 0, 
-                marginBottom: '1.5rem', 
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                fontSize: '1.25rem',
-                fontWeight: '800',
-                textTransform: 'uppercase',
-                color: '#08060D',
-              }}>
-                Tu Pedido
-              </h2>
+          <div className="grid gap-8 lg:grid-cols-[minmax(0,1fr)_320px] xl:grid-cols-[minmax(0,1fr)_360px]">
+            <section>
+              <OrderForm onFormChange={handleFormChange} />
+            </section>
 
-              {items.length === 0 ? (
-                <p style={{ color: '#71749E', textAlign: 'center', padding: '2rem 0' }}>
-                  No hay productos en el carrito
-                </p>
-              ) : (
-                items.map(({ product, quantity }) => (
-                  <div key={product.id} style={{
-                    display: 'flex',
-                    gap: '1rem',
-                    padding: '0.75rem 0',
-                    borderBottom: '1px solid #f0f0f0',
-                  }}>
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      style={{ width: '56px', height: '56px', borderRadius: '8px' }}
-                    />
-                    <div style={{ flex: 1 }}>
-                      <p style={{ margin: 0, fontWeight: '500', fontSize: '0.9rem', color: '#08060D' }}>{product.name}</p>
-                      <p style={{ margin: 0, color: '#71749E', fontSize: '0.8rem' }}>talla {product.size || 'S'} · {product.color || 'N/A'}</p>
-                    </div>
-                    <span style={{ fontWeight: '500', color: '#08060D' }}>${(product.price * quantity).toFixed(2)}</span>
-                  </div>
-                ))
-              )}
+            <aside className="space-y-5">
+              <div className="rounded-[28px] bg-white px-5 py-6 shadow-soft">
+                <h2 className="font-display text-2xl font-bold italic tracking-[-0.03em] text-ink-900">
+                  Tu Pedido
+                </h2>
 
-              <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '1rem', fontSize: '0.9rem', color: '#71749E' }}>
-                <span>Subtotal ({items.reduce((sum, i) => sum + i.quantity, 0)} productos)</span>
-                <span>${subtotal.toFixed(2)}</span>
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#FF2E63', margin: '0.25rem 0' }}>
-                <span>Flete</span>
-                <span>GRATIS</span>
-              </div>
-              {couponApplied && (
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.9rem', color: '#10B981' }}>
-                  <span>Descuento</span>
-                  <span>-${discount.toFixed(2)}</span>
+                <div className="mt-5 space-y-4 border-b border-line pb-5">
+                  {items.map(({ product, quantity }) => (
+                    <article key={product.id} className="flex items-center gap-3">
+                      <img
+                        className="h-14 w-14 rounded-2xl border border-line object-cover"
+                        src={product.image}
+                        alt={product.name}
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-sm font-semibold text-ink-900">{product.name}</p>
+                        <p className="text-xs text-ink-500">
+                          Talla: {product.size} | Color: {product.color}
+                        </p>
+                        <p className="text-xs text-ink-500">Cantidad: {quantity}</p>
+                      </div>
+                      <strong className="text-sm font-bold text-ink-900">
+                        ${(product.price * quantity).toFixed(2)}
+                      </strong>
+                    </article>
+                  ))}
                 </div>
-              )}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: '800', fontSize: '1.25rem', marginTop: '0.75rem', paddingTop: '0.75rem', borderTop: '2px solid #E2E4F0' }}>
-                <span style={{ color: '#08060D' }}>Total</span>
-                <span style={{ color: '#2563EB' }}>${total.toFixed(2)}</span>
-              </div>
-            </div>
 
-            <button
-              onClick={handleSubmit}
-              disabled={loading || submitted || !savedIsFormValid || items.length === 0}
-              style={{
-                width: '100%',
-                height: '52px',
-                backgroundColor: loading || submitted || !savedIsFormValid || items.length === 0 ? '#9ca3af' : '#2563EB',
-                color: '#fff',
-                border: 'none',
-                borderRadius: '8px',
-                fontSize: '1rem',
-                fontWeight: '800',
-                cursor: loading || submitted || !savedIsFormValid || items.length === 0 ? 'not-allowed' : 'pointer',
-                fontFamily: 'Plus Jakarta Sans, sans-serif',
-                boxShadow: loading || submitted || !savedIsFormValid || items.length === 0 ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.3)',
-              }}>
-              {loading ? 'Procesando...' : 'Finalizar Compra →'}
-            </button>
+                <div className="mt-5 space-y-3 text-sm text-ink-700">
+                  <div className="flex items-center justify-between">
+                    <span>Subtotal</span>
+                    <span>${subtotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Envio</span>
+                    <span className="font-bold uppercase text-danger">Gratis</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span>Metodo de pago</span>
+                    <span className="font-semibold text-ink-900">
+                      {paymentMethod === 'paypal' ? 'PayPal' : 'Tarjeta'}
+                    </span>
+                  </div>
+                  {couponApplied && (
+                    <div className="flex items-center justify-between text-success">
+                      <span>Descuento</span>
+                      <span>-${discount.toFixed(2)}</span>
+                    </div>
+                  )}
+                  <div className="flex items-center justify-between border-t border-line pt-3 font-display text-2xl font-extrabold text-brand-600">
+                    <span>Total</span>
+                    <span>${total.toFixed(2)}</span>
+                  </div>
+                </div>
 
-            <button
-              onClick={handleBackToCart}
-              style={{
-                width: '100%',
-                marginTop: '0.75rem',
-                padding: '0.75rem',
-                background: 'none',
-                border: '1px solid #E2E4F0',
-                borderRadius: '8px',
-                cursor: 'pointer',
-                fontSize: '0.9rem',
-                color: '#71749E',
-              }}>
-              ← Volver al Carrito
-            </button>
-
-            <p style={{ textAlign: 'center', marginTop: '0.75rem', color: '#71749E', fontSize: '0.85rem' }}>
-              🔒 Garantía de satisfacción de 30 días
-            </p>
-
-            <div style={{ 
-              marginTop: '1.5rem', 
-              padding: '1rem', 
-              borderRadius: '14px',
-              border: '2px dotted #FF2E63',
-              background: '#fff',
-            }}>
-              <p style={{ margin: '0 0 0.75rem', fontWeight: '600', fontSize: '0.9rem', color: '#08060D' }}>
-                ¿TIENES UN CÓDIGO?
-              </p>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <input
-                  type="text"
-                  value={coupon}
-                  onChange={(e) => setCoupon(e.target.value)}
-                  placeholder="VIBRA10"
-                  disabled={couponApplied}
-                  style={{
-                    flex: 1,
-                    height: '40px',
-                    padding: '0 1rem',
-                    border: '2px solid #E2E4F0',
-                    borderRadius: '8px',
-                    fontSize: '0.9rem',
-                    outline: 'none',
-                    backgroundColor: couponApplied ? '#EEF0FB' : '#fff',
-                  }}
-                />
                 <button
-                  onClick={handleApplyCoupon}
-                  disabled={couponApplied || !coupon}
-                  style={{
-                    padding: '0 1rem',
-                    backgroundColor: couponApplied ? '#10B981' : '#FF2E63',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: '8px',
-                    fontWeight: 'bold',
-                    cursor: couponApplied || !coupon ? 'not-allowed' : 'pointer',
-                  }}>
-                  APLICAR
+                  className="mt-5 flex h-14 w-full items-center justify-center rounded-2xl bg-brand-500 px-6 text-sm font-bold uppercase tracking-[0.08em] text-white shadow-[0_16px_30px_rgba(79,110,247,0.35)] transition hover:bg-brand-600 disabled:cursor-not-allowed disabled:bg-slate-400 disabled:shadow-none"
+                  onClick={handleSubmit}
+                  disabled={!isFormValid || items.length === 0 || isSubmitting}
+                >
+                  {isSubmitting
+                    ? 'Procesando compra...'
+                    : paymentMethod === 'paypal'
+                      ? 'Pagar con PayPal'
+                      : 'Finalizar compra'}
                 </button>
-              </div>
-              {couponApplied && (
-                <p style={{ margin: '0.5rem 0 0', color: '#10B981', fontSize: '0.85rem', fontWeight: '500' }}>
-                  ¡Cupón aplicado! -${discount.toFixed(2)}
+
+                <p className="mt-3 text-center text-[11px] font-medium uppercase tracking-[0.1em] text-ink-500">
+                  Garantia de satisfaccion 30 dias
                 </p>
-              )}
-            </div>
-          </div>
-        </div>
-      </main>
+              </div>
 
-      <footer style={{ 
-        background: '#F0F1F9', 
-        padding: '3rem 2rem', 
-        marginTop: '4rem',
-        borderTop: '1px solid #E2E4F0',
-      }}>
-        <div style={{ maxWidth: '1200px', margin: '0 auto', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '2rem' }}>
+              <div className="rounded-[28px] border border-dashed border-rose-300 bg-white px-5 py-5 shadow-soft">
+                <p className="text-[11px] font-bold uppercase tracking-[0.12em] text-rose-500">
+                  ¿Tienes un codigo?
+                </p>
+                <div className="mt-3 flex gap-3">
+                  <input
+                    className="h-11 min-w-0 flex-1 rounded-2xl border border-line bg-[#f7f5ff] px-4 text-sm outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100"
+                    value={coupon}
+                    onChange={(event) => setCoupon(event.target.value)}
+                    placeholder="VIBRA10"
+                    disabled={couponApplied}
+                  />
+                  <button
+                    className="h-11 rounded-2xl bg-rose-500 px-4 text-xs font-bold uppercase tracking-[0.08em] text-white transition hover:bg-rose-600 disabled:cursor-not-allowed disabled:bg-rose-300"
+                    onClick={handleApplyCoupon}
+                    disabled={couponApplied || coupon.trim() === ''}
+                  >
+                    Aplicar
+                  </button>
+                </div>
+                {couponMessage && <p className="mt-3 text-sm text-ink-700">{couponMessage}</p>}
+              </div>
+            </aside>
+          </div>
+        </main>
+
+        <footer className="grid gap-8 border-t border-line/80 px-6 py-10 text-sm text-ink-700 md:grid-cols-4 md:px-8">
           <div>
-            <h3 style={{ color: '#08060D', fontWeight: '800', margin: '0 0 0.75rem', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              Vibra Shop
-            </h3>
-            <p style={{ color: '#71749E', fontSize: '0.9rem', margin: 0 }}>
-              Transformando la moda urbana con energía eléctrica desde 2024
+            <h3 className="font-display text-base font-bold text-ink-900">Vibra Shop</h3>
+            <p className="mt-2 text-xs leading-6 text-ink-500">
+              Transformando la moda urbana con energia electrica desde 2024.
             </p>
-            <div style={{ marginTop: '1rem', display: 'flex', gap: '1rem' }}>
-              <span style={{ color: '#2563EB', cursor: 'pointer', fontSize: '1.25rem' }}>📷</span>
-              <span style={{ color: '#2563EB', cursor: 'pointer', fontSize: '1.25rem' }}>🐦</span>
-              <span style={{ color: '#2563EB', cursor: 'pointer', fontSize: '1.25rem' }}>🎵</span>
-            </div>
           </div>
 
           <div>
-            <h4 style={{ color: '#08060D', fontWeight: '600', margin: '0 0 1rem', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              PRODUCTO
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#71749E', cursor: 'pointer' }}>Hombre</span></li>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#71749E', cursor: 'pointer' }}>Mujer</span></li>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#71749E', cursor: 'pointer' }}>Accesorios</span></li>
-              <li><span style={{ color: '#FF2E63', cursor: 'pointer' }}>Ofertas</span></li>
-            </ul>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-500">Ayuda</h3>
+            <p className="mt-3 text-sm">Soporte</p>
+            <p className="mt-1 text-sm">Envios</p>
           </div>
 
           <div>
-            <h4 style={{ color: '#08060D', fontWeight: '600', margin: '0 0 1rem', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              LEGAL
-            </h4>
-            <ul style={{ listStyle: 'none', padding: 0, margin: 0 }}>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#71749E', cursor: 'pointer' }}>Privacidad</span></li>
-              <li style={{ marginBottom: '0.5rem' }}><span style={{ color: '#71749E', cursor: 'pointer' }}>Términos</span></li>
-              <li><span style={{ color: '#71749E', cursor: 'pointer' }}>Envíos</span></li>
-            </ul>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-500">Legal</h3>
+            <p className="mt-3 text-sm">Privacidad</p>
+            <p className="mt-1 text-sm">Terminos</p>
           </div>
 
           <div>
-            <h4 style={{ color: '#08060D', fontWeight: '600', margin: '0 0 1rem', fontFamily: 'Plus Jakarta Sans, sans-serif' }}>
-              NEWSLETTER
-            </h4>
-            <p style={{ color: '#71749E', fontSize: '0.9rem', margin: '0 0 1rem' }}>
-              Suscríbete para ofertas exclusivas
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <input
-                type="email"
-                placeholder="tu@email.com"
-                style={{
-                  flex: 1,
-                  height: '40px',
-                  padding: '0 1rem',
-                  border: '2px solid #E2E4F0',
-                  borderRadius: '8px',
-                  fontSize: '0.9rem',
-                  outline: 'none',
-                  backgroundColor: '#fff',
-                }}
-              />
-              <button
-                style={{
-                  padding: '0 1rem',
-                  backgroundColor: '#2563EB',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: '8px',
-                  fontWeight: 'bold',
-                  cursor: 'pointer',
-                }}>
-                →
-              </button>
-            </div>
+            <h3 className="text-[11px] font-bold uppercase tracking-[0.12em] text-brand-500">Newsletter</h3>
+            <p className="mt-3 text-xs leading-6 text-ink-500">Suscribete para ofertas exclusivas.</p>
           </div>
-        </div>
-
-        <div style={{ textAlign: 'center', marginTop: '3rem', paddingTop: '1.5rem', borderTop: '1px solid #E2E4F0' }}>
-          <span style={{ color: '#71749E', fontSize: '0.85rem' }}>
-            © 2024 VIBRA SHOP · ELECTRIC EDITORIAL
-          </span>
-        </div>
-      </footer>
+        </footer>
+      </div>
     </div>
   )
 }

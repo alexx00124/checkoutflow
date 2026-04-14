@@ -15,6 +15,16 @@ interface FieldErrors {
   postalCode?: string;
   country?: string;
   phone?: string;
+  paymentMethod?: string;
+  cardNumber?: string;
+  cardExpiry?: string;
+  cardCvc?: string;
+  paypalCountry?: string;
+  paypalFirstName?: string;
+  paypalLastName?: string;
+  paypalEmail?: string;
+  paypalPassword?: string;
+  paypalPasswordConfirm?: string;
 }
 
 const emptyFormData: FormData = {
@@ -25,6 +35,16 @@ const emptyFormData: FormData = {
   postalCode: '',
   country: '',
   phone: '',
+  paymentMethod: 'tarjeta',
+  cardNumber: '',
+  cardExpiry: '',
+  cardCvc: '',
+  paypalCountry: '',
+  paypalFirstName: '',
+  paypalLastName: '',
+  paypalEmail: '',
+  paypalPassword: '',
+  paypalPasswordConfirm: '',
 }
 
 export function useFormValidation({ onFormChange, initialData }: UseFormValidationProps = {}) {
@@ -39,21 +59,24 @@ export function useFormValidation({ onFormChange, initialData }: UseFormValidati
   const [touched, setTouched] = useState<Record<string, boolean>>({});
   const [errors, setErrors] = useState<FieldErrors>({});
 
-  const validateField = useCallback((name: keyof FormData, value: string) => {
-    const fieldSchema = checkoutSchema.shape[name];
-    const result = fieldSchema.safeParse(value);
-    
-    if (!result.success) {
-      return result.error.issues[0]?.message || 'Campo inválido';
+  const validateField = useCallback((name: keyof FormData, value: string, nextData?: FormData) => {
+    const dataToValidate = nextData || { ...formData, [name]: value }
+    const result = checkoutSchema.safeParse(dataToValidate)
+
+    if (result.success) {
+      return undefined
     }
-    return undefined;
-  }, []);
+
+    const issue = result.error.issues.find((entry) => entry.path[0] === name)
+    return issue?.message || undefined
+  }, [formData]);
 
   const handleChange = useCallback((name: keyof FormData, value: string) => {
     setFormData(prev => ({ ...prev, [name]: value }));
     
     if (touched[name]) {
-      const error = validateField(name, value);
+      const updatedData = { ...formData, [name]: value };
+      const error = validateField(name, value, updatedData);
       setErrors(prev => ({ ...prev, [name]: error }));
     }
 
@@ -92,6 +115,16 @@ export function useFormValidation({ onFormChange, initialData }: UseFormValidati
         postalCode: true,
         country: true,
         phone: true,
+        paymentMethod: true,
+        cardNumber: true,
+        cardExpiry: true,
+        cardCvc: true,
+        paypalCountry: true,
+        paypalFirstName: true,
+        paypalLastName: true,
+        paypalEmail: true,
+        paypalPassword: true,
+        paypalPasswordConfirm: true,
       });
       return false;
     }

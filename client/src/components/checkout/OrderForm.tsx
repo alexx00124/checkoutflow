@@ -1,32 +1,35 @@
-import { useState, useCallback } from 'react';
-import { useFormValidation } from '../../hooks/useFormValidation';
-import { useCheckoutState } from '../../context/CheckoutContext';
-import type { FormData } from '../../schemas/checkoutSchema';
+import { useCheckoutState } from '../../context/CheckoutContext'
+import { useFormValidation } from '../../hooks/useFormValidation'
+import type { FormData } from '../../schemas/checkoutSchema'
 
 export interface OrderFormProps {
-  onFormChange?: (data: FormData, isValid: boolean) => void;
+  onFormChange?: (data: FormData, isValid: boolean) => void
 }
 
-export type { FormData };
+export type { FormData }
+
+const labelClass = 'mb-2 block text-[11px] font-semibold uppercase tracking-[0.12em] text-ink-700'
+const inputClass = 'h-12 w-full rounded-2xl border border-[#e6e4f5] bg-[#f1efff] px-4 text-sm text-ink-900 outline-none transition focus:border-brand-400 focus:bg-white focus:ring-4 focus:ring-brand-100'
+const errorClass = 'mt-2 block text-xs font-medium text-danger'
+const sectionClass = 'rounded-[28px] border border-white/70 bg-white/55 p-6 shadow-soft backdrop-blur md:p-7'
 
 const COUNTRIES = [
-  'México', 'Colombia', 'Argentina', 'Chile', 'Perú', 
-  'Ecuador', 'Venezuela', 'Bolivia', 'Paraguay', 'Uruguay',
-  'Costa Rica', 'Guatemala', 'Honduras', 'El Salvador', 
-  'Nicaragua', 'Panamá', 'Cuba', 'República Dominicana', 
-  'Puerto Rico'
-];
-
-const inputClass = "flex flex-col gap-1.5";
-const labelClass = "text-xs font-medium uppercase tracking-wide";
-const inputStyles = { fontFamily: 'Be Vietnam Pro, sans-serif' };
+  'Colombia',
+  'España',
+  'México',
+  'Argentina',
+  'Chile',
+  'Perú',
+  'Ecuador',
+  'Uruguay',
+]
 
 export function OrderForm({ onFormChange }: OrderFormProps) {
-  const { formData: savedFormData, setFormData: saveFormData, setIsFormValid: setSavedIsFormValid } = useCheckoutState()
-  const [paymentMethod, setPaymentMethod] = useState<'tarjeta' | 'paypal'>('tarjeta');
-  const [cardNumber, setCardNumber] = useState('');
-  const [cardExpiry, setCardExpiry] = useState('');
-  const [cardCvc, setCardCvc] = useState('');
+  const {
+    formData: savedFormData,
+    setFormData: saveFormData,
+    setIsFormValid: setSavedIsFormValid,
+  } = useCheckoutState()
 
   const handleFormChangeWrapper = (data: FormData, isValid: boolean) => {
     saveFormData(data)
@@ -34,462 +37,352 @@ export function OrderForm({ onFormChange }: OrderFormProps) {
     onFormChange?.(data, isValid)
   }
 
-  const { formData, errors, handleChange, handleBlur } = useFormValidation({ 
+  const { formData, errors, handleChange, handleBlur } = useFormValidation({
     onFormChange: handleFormChangeWrapper,
-    initialData: savedFormData || undefined
-  });
-
-  const formatCardNumber = useCallback((value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 16);
-    const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ');
-    return formatted;
-  }, []);
+    initialData: savedFormData || undefined,
+  })
 
   const handleCardNumberChange = (value: string) => {
-    setCardNumber(formatCardNumber(value));
-  };
+    const digits = value.replace(/\D/g, '').slice(0, 16)
+    const formatted = digits.replace(/(\d{4})(?=\d)/g, '$1 ')
+    handleChange('cardNumber', formatted)
+  }
 
   const handleCardExpiryChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 4);
-    if (digits.length >= 2) {
-      setCardExpiry(digits.slice(0, 2) + ' / ' + digits.slice(2));
-    } else {
-      setCardExpiry(digits);
-    }
-  };
+    const digits = value.replace(/\D/g, '').slice(0, 4)
+    const formatted = digits.length > 2 ? `${digits.slice(0, 2)} / ${digits.slice(2)}` : digits
+    handleChange('cardExpiry', formatted)
+  }
 
   const handleCardCvcChange = (value: string) => {
-    const digits = value.replace(/\D/g, '').slice(0, 4);
-    setCardCvc(digits);
-  };
+    handleChange('cardCvc', value.replace(/\D/g, '').slice(0, 4))
+  }
+
+  const handlePhoneChange = (value: string) => {
+    handleChange('phone', value.replace(/\D/g, '').slice(0, 10))
+  }
+
+  const handlePostalCodeChange = (value: string) => {
+    handleChange('postalCode', value.replace(/\D/g, '').slice(0, 10))
+  }
+
+  const handlePaymentMethodChange = (method: 'tarjeta' | 'paypal') => {
+    handleChange('paymentMethod', method)
+  }
+
+  const isCardPayment = formData.paymentMethod === 'tarjeta'
 
   return (
-    <div className="w-full max-w-xl">
-      <div 
-        className="p-6 rounded-[14px] bg-white"
-        style={{ 
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
-          border: '1px solid #E2E4F0'
-        }}
-      >
-        <div className="flex items-center gap-3 mb-6">
-          <span 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-            style={{ backgroundColor: '#2563EB' }}
-          >
+    <div className="space-y-6">
+      <section className={sectionClass}>
+        <div className="mb-6 flex items-start gap-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-400 font-display text-sm font-bold text-white">
             1
           </span>
-          <h2 
-            className="text-xl font-semibold"
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', color: '#08060D' }}
-          >
-            Datos Personales
-          </h2>
-        </div>
-
-        <div className="space-y-5 mb-8">
-          <div className="flex gap-4">
-            <div className={`${inputClass} flex-1`}>
-              <label 
-                htmlFor="fullName"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                Nombre Completo *
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg" style={{ color: '#71749E' }}>
-                  👤
-                </span>
-                <input
-                  id="fullName"
-                  type="text"
-                  name="fullName"
-                  value={formData.fullName}
-                  onChange={(e) => handleChange('fullName', e.target.value)}
-                  onBlur={() => handleBlur('fullName')}
-                  placeholder="Mateo García"
-                  className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                  style={{ 
-                    ...inputStyles,
-                    paddingLeft: '3rem',
-                    backgroundColor: errors.fullName ? '#FFF0F4' : '#E8EAFE',
-                    border: `2px solid ${errors.fullName ? '#FF2E63' : formData.fullName.length >= 3 && !errors.fullName ? '#10B981' : '#E2E4F0'}`,
-                    color: '#08060D',
-                  }}
-                />
-              </div>
-              {errors.fullName && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {errors.fullName}
-                </span>
-              )}
-            </div>
-
-            <div className={`${inputClass} flex-1`}>
-              <label 
-                htmlFor="email"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                Correo Electrónico *
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg" style={{ color: '#71749E' }}>
-                  ✉
-                </span>
-                <input
-                  id="email"
-                  type="email"
-                  name="email"
-                  value={formData.email}
-                  onChange={(e) => handleChange('email', e.target.value)}
-                  onBlur={() => handleBlur('email')}
-                  placeholder="mateo@vibrashop.com"
-                  className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                  style={{ 
-                    ...inputStyles,
-                    paddingLeft: '3rem',
-                    backgroundColor: errors.email ? '#FFF0F4' : '#E8EAFE',
-                    border: `2px solid ${errors.email ? '#FF2E63' : formData.email.includes('@') && formData.email.includes('.') && !errors.email ? '#10B981' : '#E2E4F0'}`,
-                    color: '#08060D',
-                  }}
-                />
-              </div>
-              {errors.email && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {errors.email}
-                </span>
-              )}
-            </div>
+          <div>
+            <h2 className="font-display text-[28px] font-bold tracking-[-0.03em] text-ink-900">
+              Datos Personales
+            </h2>
+            <p className="text-sm text-ink-700">Todos los campos marcados con * son obligatorios.</p>
           </div>
         </div>
 
-        <div className="flex items-center gap-3 mb-6">
-          <span 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-            style={{ backgroundColor: '#2563EB' }}
-          >
+        <div className="grid gap-4 md:grid-cols-2">
+          <div>
+            <label className={labelClass} htmlFor="fullName">Nombre completo *</label>
+            <input
+              className={inputClass}
+              id="fullName"
+              value={formData.fullName}
+              onChange={(event) => handleChange('fullName', event.target.value)}
+              onBlur={() => handleBlur('fullName')}
+              placeholder="Ej. Mateo Garcia"
+            />
+            {errors.fullName && <span className={errorClass}>{errors.fullName}</span>}
+          </div>
+
+          <div>
+            <label className={labelClass} htmlFor="email">Correo electronico *</label>
+            <input
+              className={inputClass}
+              id="email"
+              type="email"
+              value={formData.email}
+              onChange={(event) => handleChange('email', event.target.value)}
+              onBlur={() => handleBlur('email')}
+              placeholder="mateo@vibrashop.com"
+            />
+            {errors.email && <span className={errorClass}>{errors.email}</span>}
+          </div>
+        </div>
+
+        <div className="mt-4">
+          <label className={labelClass} htmlFor="phone">Informacion de contacto *</label>
+          <input
+            className={inputClass}
+            id="phone"
+            type="tel"
+            value={formData.phone}
+            onChange={(event) => handlePhoneChange(event.target.value)}
+            onBlur={() => handleBlur('phone')}
+            placeholder="3001234567"
+          />
+          {errors.phone && <span className={errorClass}>{errors.phone}</span>}
+        </div>
+      </section>
+
+      <section className={sectionClass}>
+        <div className="mb-6 flex items-start gap-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-400 font-display text-sm font-bold text-white">
             2
           </span>
-          <h2 
-            className="text-xl font-semibold"
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', color: '#08060D' }}
-          >
-            Dirección de Envío
-          </h2>
+          <div>
+            <h2 className="font-display text-[28px] font-bold tracking-[-0.03em] text-ink-900">
+              Direccion de Envio
+            </h2>
+            <p className="text-sm text-ink-700">Verifica tus datos antes de finalizar la compra.</p>
+          </div>
         </div>
 
-        <div className="space-y-5 mb-8">
-          <div className={inputClass}>
-            <label 
-              htmlFor="address"
-              className={labelClass}
-              style={{ ...inputStyles, color: '#71749E' }}
-            >
-              Calle y Número *
-            </label>
+        <div>
+          <label className={labelClass} htmlFor="address">Calle y numero *</label>
+          <input
+            className={inputClass}
+            id="address"
+            value={formData.address}
+            onChange={(event) => handleChange('address', event.target.value)}
+            onBlur={() => handleBlur('address')}
+            placeholder="Av. de la Libertad 123, Depto 4B"
+          />
+          {errors.address && <span className={errorClass}>{errors.address}</span>}
+        </div>
+
+        <div className="mt-4 grid gap-4 md:grid-cols-[1.5fr_1fr_1fr]">
+          <div>
+            <label className={labelClass} htmlFor="city">Ciudad *</label>
             <input
-              id="address"
-              type="text"
-              name="address"
-              value={formData.address}
-              onChange={(e) => handleChange('address', e.target.value)}
-              onBlur={() => handleBlur('address')}
-              placeholder="Av. de la Libertad 123, Depto 48"
-              className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-              style={{ 
-                ...inputStyles,
-                backgroundColor: errors.address ? '#FFF0F4' : '#E8EAFE',
-                border: `2px solid ${errors.address ? '#FF2E63' : formData.address.length >= 5 && !errors.address ? '#10B981' : '#E2E4F0'}`,
-                color: '#08060D',
-              }}
+              className={inputClass}
+              id="city"
+              value={formData.city}
+              onChange={(event) => handleChange('city', event.target.value)}
+              onBlur={() => handleBlur('city')}
+              placeholder="Ciudad de Mexico"
             />
-            {errors.address && (
-              <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                {errors.address}
-              </span>
-            )}
+            {errors.city && <span className={errorClass}>{errors.city}</span>}
           </div>
 
-          <div className="flex gap-4">
-            <div className={`${inputClass} flex-[2]`}>
-              <label 
-                htmlFor="city"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                Ciudad *
-              </label>
-              <input
-                id="city"
-                type="text"
-                name="city"
-                value={formData.city}
-                onChange={(e) => handleChange('city', e.target.value)}
-                onBlur={() => handleBlur('city')}
-                placeholder="Ciudad de México"
-                className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                style={{ 
-                  ...inputStyles,
-                  backgroundColor: errors.city ? '#FFF0F4' : '#E8EAFE',
-                  border: `2px solid ${errors.city ? '#FF2E63' : formData.city.length >= 2 && !errors.city ? '#10B981' : '#E2E4F0'}`,
-                  color: '#08060D',
-                }}
-              />
-              {errors.city && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {errors.city}
-                </span>
-              )}
-            </div>
+          <div>
+            <label className={labelClass} htmlFor="postalCode">C. postal *</label>
+            <input
+              className={inputClass}
+              id="postalCode"
+              value={formData.postalCode}
+              onChange={(event) => handlePostalCodeChange(event.target.value)}
+              onBlur={() => handleBlur('postalCode')}
+              placeholder="06700"
+            />
+            {errors.postalCode && <span className={errorClass}>{errors.postalCode}</span>}
+          </div>
 
-            <div className={`${inputClass} flex-1`}>
-              <label 
-                htmlFor="postalCode"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                C. Postal *
-              </label>
-              <input
-                id="postalCode"
-                type="text"
-                name="postalCode"
-                value={formData.postalCode}
-                onChange={(e) => handleChange('postalCode', e.target.value)}
-                onBlur={() => handleBlur('postalCode')}
-                placeholder="06700"
-                className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                style={{ 
-                  ...inputStyles,
-                  backgroundColor: errors.postalCode ? '#FFF0F4' : '#E8EAFE',
-                  border: `2px solid ${errors.postalCode ? '#FF2E63' : formData.postalCode.length >= 4 && !errors.postalCode ? '#10B981' : '#E2E4F0'}`,
-                  color: '#08060D',
-                }}
-              />
-              {errors.postalCode && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {errors.postalCode}
-                </span>
-              )}
-            </div>
-
-            <div className={`${inputClass} flex-1`}>
-              <label 
-                htmlFor="country"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                País *
-              </label>
-              <select
-                id="country"
-                name="country"
-                value={formData.country}
-                onChange={(e) => handleChange('country', e.target.value)}
-                onBlur={() => handleBlur('country')}
-                className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200 appearance-none cursor-pointer"
-                style={{ 
-                  ...inputStyles,
-                  backgroundColor: errors.country ? '#FFF0F4' : '#E8EAFE',
-                  border: `2px solid ${errors.country ? '#FF2E63' : formData.country && !errors.country ? '#10B981' : '#E2E4F0'}`,
-                  color: '#08060D',
-                  backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2371749E'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7'%3E%3C/path%3E%3C/svg%3E")`,
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: 'right 1rem center',
-                  backgroundSize: '1.25rem',
-                }}
-              >
-                <option value="">Selecciona</option>
-                {COUNTRIES.map(country => (
-                  <option key={country} value={country}>{country}</option>
+          <div>
+            <label className={labelClass} htmlFor="country">Pais *</label>
+            <select
+              className={inputClass}
+              id="country"
+              value={formData.country}
+              onChange={(event) => handleChange('country', event.target.value)}
+              onBlur={() => handleBlur('country')}
+            >
+              <option value="">Selecciona un pais</option>
+              {COUNTRIES.map((country) => (
+                <option key={country} value={country}>
+                  {country}
+                </option>
                 ))}
-              </select>
-              {errors.country && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {errors.country}
-                </span>
-              )}
-            </div>
-          </div>
-
-          <div className={inputClass}>
-            <label 
-              htmlFor="phone"
-              className={labelClass}
-              style={{ ...inputStyles, color: '#71749E' }}
-            >
-              Teléfono *
-            </label>
-            <input
-              id="phone"
-              type="tel"
-              name="phone"
-              value={formData.phone}
-              onChange={(e) => handleChange('phone', e.target.value)}
-              onBlur={() => handleBlur('phone')}
-              placeholder="+52 55 1234 5678"
-              className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-              style={{ 
-                ...inputStyles,
-                backgroundColor: errors.phone ? '#FFF0F4' : '#E8EAFE',
-                border: `2px solid ${errors.phone ? '#FF2E63' : formData.phone.length >= 7 && !errors.phone ? '#10B981' : '#E2E4F0'}`,
-                color: '#08060D',
-              }}
-            />
-            {errors.phone && (
-              <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                {errors.phone}
-              </span>
-            )}
+            </select>
+            {errors.country && <span className={errorClass}>{errors.country}</span>}
           </div>
         </div>
+      </section>
 
-        <div className="flex items-center gap-3 mb-6 mt-8">
-          <span 
-            className="w-8 h-8 rounded-full flex items-center justify-center text-white text-sm font-semibold"
-            style={{ backgroundColor: '#2563EB' }}
-          >
+      <section className={sectionClass}>
+        <div className="mb-6 flex items-start gap-4">
+          <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-brand-400 font-display text-sm font-bold text-white">
             3
           </span>
-          <h2 
-            className="text-xl font-semibold"
-            style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', color: '#08060D' }}
-          >
-            Método de Pago
-          </h2>
+          <div>
+            <h2 className="font-display text-[28px] font-bold tracking-[-0.03em] text-ink-900">
+              Metodo de Pago
+            </h2>
+            <p className="text-sm text-ink-700">El pago es simulado y la interfaz permanece en espanol.</p>
+          </div>
         </div>
 
-        <div className="flex gap-2 mb-4">
+        <div className="mb-5 grid gap-3 md:grid-cols-2">
           <button
             type="button"
-            onClick={() => setPaymentMethod('tarjeta')}
-            className="flex-1 py-3 px-4 rounded-lg text-base font-medium transition-all duration-200"
-            style={{ 
-              fontFamily: 'Be Vietnam Pro, sans-serif',
-              backgroundColor: paymentMethod === 'tarjeta' ? '#2563EB' : '#E8EAFE',
-              color: paymentMethod === 'tarjeta' ? '#fff' : '#08060D',
-              border: paymentMethod === 'tarjeta' ? '2px solid #2563EB' : '2px solid #E2E4F0',
-            }}
+            className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-semibold transition ${
+              isCardPayment
+                ? 'border-brand-500 bg-white text-brand-700 shadow-[inset_0_0_0_1px_rgba(79,110,247,0.12)]'
+                : 'border-[#e6e4f5] bg-[#f1efff] text-ink-700 hover:bg-white'
+            }`}
+            onClick={() => handlePaymentMethodChange('tarjeta')}
           >
-            💳 Tarjeta
+            Tarjeta
           </button>
           <button
             type="button"
-            onClick={() => setPaymentMethod('paypal')}
-            className="flex-1 py-3 px-4 rounded-lg text-base font-medium transition-all duration-200"
-            style={{ 
-              fontFamily: 'Be Vietnam Pro, sans-serif',
-              backgroundColor: paymentMethod === 'paypal' ? '#2563EB' : '#E8EAFE',
-              color: paymentMethod === 'paypal' ? '#fff' : '#08060D',
-              border: paymentMethod === 'paypal' ? '2px solid #2563EB' : '2px solid #E2E4F0',
-            }}
+            className={`flex h-12 items-center justify-center rounded-2xl border text-sm font-semibold transition ${
+              !isCardPayment
+                ? 'border-brand-500 bg-white text-brand-700 shadow-[inset_0_0_0_1px_rgba(79,110,247,0.12)]'
+                : 'border-[#e6e4f5] bg-[#f1efff] text-ink-700 hover:bg-white'
+            }`}
+            onClick={() => handlePaymentMethodChange('paypal')}
           >
-            🅿 PayPal
+            PayPal
           </button>
         </div>
 
-        {paymentMethod === 'tarjeta' ? (
+        {isCardPayment ? (
           <div className="space-y-4">
-            <div className={inputClass}>
-              <label 
-                htmlFor="cardNumber"
-                className={labelClass}
-                style={{ ...inputStyles, color: '#71749E' }}
-              >
-                Número de Tarjeta *
-              </label>
-              <div className="relative">
-                <span className="absolute left-4 top-1/2 -translate-y-1/2 text-lg" style={{ color: '#71749E' }}>
-                  🔒
-                </span>
-                <input
-                  id="cardNumber"
-                  type="text"
-                  value={cardNumber}
-                  onChange={(e) => handleCardNumberChange(e.target.value)}
-                  placeholder="0000 0000 0000 0000"
-                  className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                  style={{ 
-                    ...inputStyles,
-                    paddingLeft: '3rem',
-                    backgroundColor: '#E8EAFE',
-                    border: cardNumber.length === 19 ? '#10B981' : '#E2E4F0',
-                    color: '#08060D',
-                    letterSpacing: '0.1em',
-                  }}
-                />
-              </div>
-              {false && (
-                <span className="text-xs font-medium" style={{ color: '#FF2E63' }}>
-                  {'error'}
-                </span>
-              )}
+            <div>
+              <label className={labelClass} htmlFor="cardNumber">Numero de tarjeta *</label>
+              <input
+                className={inputClass}
+                id="cardNumber"
+                value={formData.cardNumber}
+                onChange={(event) => handleCardNumberChange(event.target.value)}
+                onBlur={() => handleBlur('cardNumber')}
+                placeholder="0000 0000 0000 0000"
+              />
+              {errors.cardNumber && <span className={errorClass}>{errors.cardNumber}</span>}
             </div>
 
-            <div className="flex gap-4">
-              <div className={`${inputClass} flex-1`}>
-                <label 
-                  htmlFor="cardExpiry"
-                  className={labelClass}
-                  style={{ ...inputStyles, color: '#71749E' }}
-                >
-                  Vencimiento *
-                </label>
+            <div className="grid gap-4 md:grid-cols-2">
+              <div>
+                <label className={labelClass} htmlFor="cardExpiry">Vencimiento *</label>
                 <input
+                  className={inputClass}
                   id="cardExpiry"
-                  type="text"
-                  value={cardExpiry}
-                  onChange={(e) => handleCardExpiryChange(e.target.value)}
+                  value={formData.cardExpiry}
+                  onChange={(event) => handleCardExpiryChange(event.target.value)}
+                  onBlur={() => handleBlur('cardExpiry')}
                   placeholder="MM / AA"
-                  className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                  style={{ 
-                    ...inputStyles,
-                    backgroundColor: '#E8EAFE',
-                    border: cardExpiry.length === 7 ? '#10B981' : '#E2E4F0',
-                    color: '#08060D',
-                  }}
                 />
+                {errors.cardExpiry && <span className={errorClass}>{errors.cardExpiry}</span>}
               </div>
 
-              <div className={`${inputClass} flex-1`}>
-                <label 
-                  htmlFor="cardCvc"
-                  className={labelClass}
-                  style={{ ...inputStyles, color: '#71749E' }}
-                >
-                  CVC *
-                </label>
+              <div>
+                <label className={labelClass} htmlFor="cardCvc">CVC *</label>
                 <input
+                  className={inputClass}
                   id="cardCvc"
-                  type="text"
-                  value={cardCvc}
-                  onChange={(e) => handleCardCvcChange(e.target.value)}
+                  value={formData.cardCvc}
+                  onChange={(event) => handleCardCvcChange(event.target.value)}
+                  onBlur={() => handleBlur('cardCvc')}
                   placeholder="123"
-                  maxLength={4}
-                  className="w-full h-12 px-4 rounded-lg text-base outline-none transition-all duration-200"
-                  style={{ 
-                    ...inputStyles,
-                    backgroundColor: '#E8EAFE',
-                    border: cardCvc.length >= 3 ? '#10B981' : '#E2E4F0',
-                    color: '#08060D',
-                  }}
                 />
+                {errors.cardCvc && <span className={errorClass}>{errors.cardCvc}</span>}
               </div>
             </div>
           </div>
         ) : (
-          <div 
-            className="p-4 rounded-lg"
-            style={{ backgroundColor: '#E8EAFE', color: '#08060D' }}
-          >
-            <p className="text-base" style={{ fontFamily: 'Be Vietnam Pro, sans-serif' }}>
-              Serás redirigido a PayPal para completar tu pago de forma segura.
-            </p>
+          <div className="rounded-3xl border border-brand-200 bg-white p-5 shadow-sm">
+            <div className="mb-5 flex items-start justify-between gap-4">
+              <div>
+                <p className="font-display text-[32px] font-bold leading-tight tracking-[-0.04em] text-ink-900">
+                  Compra y envia dinero a todo el mundo de forma rapida y sencilla.
+                </p>
+              </div>
+
+              <div className="rounded-2xl bg-[#003087] px-4 py-2 text-sm font-bold text-white shadow-sm">
+                PayPal
+              </div>
+            </div>
+
+            <div className="space-y-3">
+              <div>
+                <select
+                  className={inputClass}
+                  value={formData.paypalCountry}
+                  onChange={(event) => handleChange('paypalCountry', event.target.value)}
+                  onBlur={() => handleBlur('paypalCountry')}
+                >
+                  <option value="">Pais/region</option>
+                  {COUNTRIES.map((country) => (
+                    <option key={`paypal-${country}`} value={country}>
+                      {country}
+                    </option>
+                  ))}
+                </select>
+                {errors.paypalCountry && <span className={errorClass}>{errors.paypalCountry}</span>}
+              </div>
+
+              <div>
+                <input
+                  className={inputClass}
+                  value={formData.paypalFirstName}
+                  onChange={(event) => handleChange('paypalFirstName', event.target.value)}
+                  onBlur={() => handleBlur('paypalFirstName')}
+                  placeholder="Nombre"
+                />
+                {errors.paypalFirstName && <span className={errorClass}>{errors.paypalFirstName}</span>}
+              </div>
+
+              <div>
+                <input
+                  className={inputClass}
+                  value={formData.paypalLastName}
+                  onChange={(event) => handleChange('paypalLastName', event.target.value)}
+                  onBlur={() => handleBlur('paypalLastName')}
+                  placeholder="Apellidos"
+                />
+                {errors.paypalLastName && <span className={errorClass}>{errors.paypalLastName}</span>}
+              </div>
+
+              <div>
+                <input
+                  className={inputClass}
+                  type="email"
+                  value={formData.paypalEmail}
+                  onChange={(event) => handleChange('paypalEmail', event.target.value)}
+                  onBlur={() => handleBlur('paypalEmail')}
+                  placeholder="Direccion de correo electronico"
+                />
+                {errors.paypalEmail && <span className={errorClass}>{errors.paypalEmail}</span>}
+              </div>
+
+              <div>
+                <input
+                  className={inputClass}
+                  type="password"
+                  value={formData.paypalPassword}
+                  onChange={(event) => handleChange('paypalPassword', event.target.value)}
+                  onBlur={() => handleBlur('paypalPassword')}
+                  placeholder="Crear contrasena"
+                />
+                {errors.paypalPassword && <span className={errorClass}>{errors.paypalPassword}</span>}
+              </div>
+
+              <div>
+                <input
+                  className={inputClass}
+                  type="password"
+                  value={formData.paypalPasswordConfirm}
+                  onChange={(event) => handleChange('paypalPasswordConfirm', event.target.value)}
+                  onBlur={() => handleBlur('paypalPasswordConfirm')}
+                  placeholder="Confirmar contrasena"
+                />
+                {errors.paypalPasswordConfirm && <span className={errorClass}>{errors.paypalPasswordConfirm}</span>}
+              </div>
+
+              <div className="rounded-2xl border border-dashed border-brand-300 bg-brand-50 px-4 py-3 text-sm text-brand-700">
+                Este formulario es simulado. Al hacer clic en <strong>Pagar con PayPal</strong>, el sistema aprobara la compra como si PayPal hubiese validado la cuenta.
+              </div>
+            </div>
           </div>
         )}
-      </div>
+      </section>
     </div>
-  );
+  )
 }

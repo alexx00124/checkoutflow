@@ -5,7 +5,7 @@ import ConfirmationPage from '../pages/ConfirmationPage'
 
 const AppRoutes = () => {
   return (
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <Routes>
         <Route path="/" element={<Navigate to="/cart" replace />} />
         <Route path="/cart" element={<CartPage />} />
