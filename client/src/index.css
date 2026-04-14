@@ -1,3 +1,18 @@
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;500;600&family=Plus+Jakarta+Sans:wght@500;600;700&display=swap');
+@import "tailwindcss";
+
+@theme {
+  --color-primary: #2563EB;
+  --color-secondary: #7C3AED;
+  --color-tertiary: #FF2E63;
+  --color-neutral: #71749E;
+  --color-fondo: #0F0F1A;
+  --color-superficie: #FFFFFF;
+  --color-borde: #E2E4F0;
+  --font-heading: 'Plus Jakarta Sans', sans-serif;
+  --font-body: 'Be Vietnam Pro', sans-serif;
+}
+
 :root {
   --text: #6b6375;
   --text-h: #08060d;

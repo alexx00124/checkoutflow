@@ -3,7 +3,9 @@ export interface Product {
   name: string
   price: number
   image: string
-  description: string
+  description?: string
+  size?: string
+  color?: string
 }
 
 export interface CartItem {
