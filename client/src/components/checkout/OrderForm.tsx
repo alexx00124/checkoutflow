@@ -117,7 +117,7 @@ export function OrderForm({ onFormChange }: OrderFormProps) {
         </div>
 
         <div className="mt-4">
-          <label className={labelClass} htmlFor="phone">Informacion de contacto *</label>
+          <label className={labelClass} htmlFor="phone">numero de contacto*</label>
           <input
             className={inputClass}
             id="phone"

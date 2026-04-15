@@ -2,6 +2,8 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import CartPage from '../pages/CartPage'
 import CheckoutPage from '../pages/CheckoutPage'
 import ConfirmationPage from '../pages/ConfirmationPage'
+import ProcessingPaymentPage from '../pages/ProcessingPaymentPage'
+import PurchaseAlertPage from '../pages/PurchaseAlertPage'
 
 const AppRoutes = () => {
   return (
@@ -10,6 +12,8 @@ const AppRoutes = () => {
         <Route path="/" element={<Navigate to="/cart" replace />} />
         <Route path="/cart" element={<CartPage />} />
         <Route path="/checkout" element={<CheckoutPage />} />
+        <Route path="/processing-payment" element={<ProcessingPaymentPage />} />
+        <Route path="/purchase-alert" element={<PurchaseAlertPage />} />
         <Route path="/confirmation" element={<ConfirmationPage />} />
       </Routes>
     </BrowserRouter>

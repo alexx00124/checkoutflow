@@ -70,7 +70,7 @@ const CheckoutPage = () => {
 
     clearCart()
     resetCheckout()
-    navigate('/confirmation')
+    navigate('/processing-payment')
   }
 
   if (items.length === 0) {
