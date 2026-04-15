@@ -55,10 +55,45 @@ const CheckoutPage = () => {
 
     setIsSubmitting(true)
 
-    await new Promise((resolve) => setTimeout(resolve, 1200))
+    const orderPayload = {
+      name: completedFormData.fullName,
+      email: completedFormData.email,
+      address: completedFormData.address,
+      city: completedFormData.city,
+      country: completedFormData.country,
+      postalCode: completedFormData.postalCode,
+      phone: completedFormData.phone,
+      paymentMethod: completedFormData.paymentMethod,
+      items: items.map(({ product, quantity }) => ({
+        productId: product.id,
+        name: product.name,
+        image: product.image,
+        description: product.description,
+        quantity,
+        price: product.price,
+      })),
+    }
+
+    const apiBaseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000'
+
+    const response = await fetch(`${apiBaseUrl}/api/orders`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(orderPayload),
+    })
+
+    if (!response.ok) {
+      setIsSubmitting(false)
+      setCouponMessage('No se pudo guardar la compra. Intenta nuevamente.')
+      return
+    }
+
+    const result = await response.json()
 
     setLastOrder({
-      id: `VIBRA-${Date.now().toString().slice(-8)}`,
+      id: `VIBRA-${String(result?.order?.id ?? Date.now()).slice(-8)}`,
       createdAt: new Date().toISOString(),
       items,
       subtotal,
